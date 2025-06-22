@@ -31,7 +31,6 @@ class StartupSubmission(BaseModel):
     sector: str
     description: Optional[str] = None
     funding_stage: Optional[str] = None
-    website: Optional[str] = None
 
 class MatchingRequest(BaseModel):
     sectors: List[str]
@@ -92,7 +91,6 @@ def init_database():
             sector TEXT NOT NULL,
             description TEXT,
             funding_stage TEXT,
-            website TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -314,16 +312,15 @@ async def submit_startup(startup: StartupSubmission):
     
     try:
         cursor.execute('''
-            INSERT INTO startups (company_name, founder_name, founder_email, sector, description, funding_stage, website)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO startups (company_name, founder_name, founder_email, sector, description, funding_stage)
+            VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             startup.company_name,
             startup.founder_name,
             startup.founder_email,
             startup.sector,
             startup.description,
-            startup.funding_stage,
-            startup.website
+            startup.funding_stage
         ))
         
         startup_id = cursor.lastrowid
@@ -363,8 +360,7 @@ async def get_startup(startup_id: int):
             "sector": row[4],
             "description": row[5],
             "funding_stage": row[6],
-            "website": row[7],
-            "created_at": row[8]
+            "created_at": row[7]
         }
     }
 

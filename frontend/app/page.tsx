@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 
 interface StartupForm {
+  firstName: string
+  lastName: string
   email: string
   startupName: string
-  startupLink: string
   fundingStage: string
   industries: string[]
 }
@@ -52,9 +53,10 @@ const getStages = (stageString?: string): string[] => {
 
 export default function Component() {
   const [formData, setFormData] = useState<StartupForm>({
+    firstName: "",
+    lastName: "",
     email: "",
     startupName: "",
-    startupLink: "",
     fundingStage: "",
     industries: []
   })
@@ -155,11 +157,10 @@ export default function Component() {
         },
         body: JSON.stringify({
           company_name: formData.startupName,
-          founder_name: formData.email,
+          founder_name: `${formData.firstName} ${formData.lastName}`,
           founder_email: formData.email,
           sector: formData.industries.join(", "),
-          funding_stage: formData.fundingStage,
-          website: formData.startupLink || null
+          funding_stage: formData.fundingStage
         })
       })
 
@@ -381,6 +382,33 @@ export default function Component() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName" className="text-white">
+                      First name
+                    </Label>
+                    <Input 
+                      id="firstName" 
+                      placeholder="John"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange("firstName", e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-white">
+                      Last name
+                    </Label>
+                    <Input 
+                      id="lastName" 
+                      placeholder="Doe"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange("lastName", e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-white">
                     Email
@@ -405,19 +433,6 @@ export default function Component() {
                     value={formData.startupName}
                     onChange={(e) => handleInputChange("startupName", e.target.value)}
                     required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="startupLink" className="text-white">
-                    Startup website (optional)
-                  </Label>
-                  <Input 
-                    id="startupLink" 
-                    type="url"
-                    placeholder="https://yourstartup.com"
-                    value={formData.startupLink}
-                    onChange={(e) => handleInputChange("startupLink", e.target.value)}
                   />
                 </div>
 
