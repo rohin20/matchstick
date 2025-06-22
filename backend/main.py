@@ -58,13 +58,11 @@ class MatchingResponse(BaseModel):
     total_pages: int
 
 # Database setup
-DATABASE_PATH = "backend/database/vc_matching.db"
+DATABASE_PATH = "vc_matching.db"
 CSV_PATH = "data.csv"
 
 def init_database():
     """Initialize SQLite database and import CSV data"""
-    os.makedirs("backend/database", exist_ok=True)
-    
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     
