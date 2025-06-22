@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 import Script from "next/script"
 
+// Backend URL configuration
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+
 interface StartupForm {
   email: string
   startupName: string
@@ -114,7 +117,7 @@ export default function Component() {
     setError("")
 
     try {
-      const matchingResponse = await fetch("http://localhost:8000/api/matching/find", {
+      const matchingResponse = await fetch(`${BACKEND_URL}/api/matching/find`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,7 +172,7 @@ export default function Component() {
       }
 
       // Then submit startup information to backend
-      const startupResponse = await fetch("http://localhost:8000/api/startups/submit", {
+      const startupResponse = await fetch(`${BACKEND_URL}/api/startups/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -188,7 +191,7 @@ export default function Component() {
       }
 
       // Then find matching VCs
-      const matchingResponse = await fetch("http://localhost:8000/api/matching/find", {
+      const matchingResponse = await fetch(`${BACKEND_URL}/api/matching/find`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
