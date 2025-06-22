@@ -9,10 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 
 interface StartupForm {
-  firstName: string
-  lastName: string
   email: string
   startupName: string
+  website: string
   fundingStage: string
   industries: string[]
 }
@@ -53,10 +52,9 @@ const getStages = (stageString?: string): string[] => {
 
 export default function Component() {
   const [formData, setFormData] = useState<StartupForm>({
-    firstName: "",
-    lastName: "",
     email: "",
     startupName: "",
+    website: "",
     fundingStage: "",
     industries: []
   })
@@ -149,7 +147,27 @@ export default function Component() {
     setError("")
 
     try {
-      // First submit startup information
+      // First submit to Formspree
+      const formspreeResponse = await fetch("https://formspree.io/f/xblyzlzv", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          startupName: formData.startupName,
+          website: formData.website,
+          fundingStage: formData.fundingStage,
+          industries: formData.industries.join(", "),
+          message: `New startup submission: ${formData.startupName} (${formData.fundingStage} stage) in ${formData.industries.join(", ")}`
+        })
+      })
+
+      if (!formspreeResponse.ok) {
+        throw new Error("Failed to submit form data")
+      }
+
+      // Then submit startup information to backend
       const startupResponse = await fetch("http://localhost:8000/api/startups/submit", {
         method: "POST",
         headers: {
@@ -157,7 +175,7 @@ export default function Component() {
         },
         body: JSON.stringify({
           company_name: formData.startupName,
-          founder_name: `${formData.firstName} ${formData.lastName}`,
+          founder_name: formData.email,
           founder_email: formData.email,
           sector: formData.industries.join(", "),
           funding_stage: formData.fundingStage
@@ -342,26 +360,11 @@ export default function Component() {
             <div className="space-y-4">
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-white">matchstick</h1>
               <h2 className="text-2xl lg:text-3xl font-medium text-gray-300">
-                Connect startups with the right investors
+                Connecting your startup with the right investors in &lt; 1 minute.
               </h2>
               <p className="text-lg text-gray-400 leading-relaxed">
-                Skip the endless networking events and cold emails. We match ambitious startups with investors who are
-                actively looking for opportunities in your space.
+                Access a diverse network of over <span className="text-red-400">3,000 investors</span>, including verified <span className="text-red-400">email addresses</span>.
               </p>
-            </div>
-            <div className="space-y-3 text-gray-400">
-              <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-gray-600 rounded-full"></div>
-                <span>Curated investor network</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-gray-600 rounded-full"></div>
-                <span>Smart matching algorithm</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-gray-600 rounded-full"></div>
-                <span>Direct introductions</span>
-              </div>
             </div>
           </div>
 
@@ -369,10 +372,7 @@ export default function Component() {
           <div className="p-8">
             <div className="space-y-6">
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-white">Get matched with investors</h3>
-                <p className="text-gray-400">
-                  Tell us about your startup and we'll connect you with relevant investors.
-                </p>
+                <h3 className="text-xl font-semibold text-white">Get matched with the best investors for free.</h3>
               </div>
 
               {error && (
@@ -382,41 +382,14 @@ export default function Component() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-white">
-                      First name
-                    </Label>
-                    <Input 
-                      id="firstName" 
-                      placeholder="John"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange("firstName", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-white">
-                      Last name
-                    </Label>
-                    <Input 
-                      id="lastName" 
-                      placeholder="Doe"
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange("lastName", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-white">
-                    Email
+                    Email*
                   </Label>
                   <Input 
                     id="email" 
                     type="email" 
-                    placeholder="john@startup.com"
+                    placeholder="john@gmail.com"
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     required
@@ -425,7 +398,7 @@ export default function Component() {
 
                 <div className="space-y-2">
                   <Label htmlFor="startupName" className="text-white">
-                    Startup name
+                    Startup name*
                   </Label>
                   <Input 
                     id="startupName" 
@@ -433,6 +406,18 @@ export default function Component() {
                     value={formData.startupName}
                     onChange={(e) => handleInputChange("startupName", e.target.value)}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website" className="text-white">
+                    Website
+                  </Label>
+                  <Input 
+                    id="website" 
+                    placeholder="https://www.yourstartup.com"
+                    value={formData.website}
+                    onChange={(e) => handleInputChange("website", e.target.value)}
                   />
                 </div>
 
@@ -456,7 +441,7 @@ export default function Component() {
 
                 <div className="space-y-2">
                   <Label className="text-white">
-                    Industries (select all that apply)
+                    Industries (select all that apply)*
                   </Label>
                   <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                     {availableIndustries.map((industry) => (
