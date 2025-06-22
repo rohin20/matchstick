@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import Script from "next/script"
 
 interface StartupForm {
   email: string
@@ -220,6 +221,42 @@ export default function Component() {
   if (showResults) {
     return (
       <div className="min-h-screen bg-black">
+        <Script
+          id="structured-data"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Matchstick",
+              "description": "Connect startups with the right investors in under 1 minute. Access a diverse network of over 3,000 investors with verified email addresses.",
+              "url": "https://matchstickvc.com",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "Web Browser",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+                "description": "Free startup-investor matching service"
+              },
+              "provider": {
+                "@type": "Organization",
+                "name": "Matchstick",
+                "url": "https://matchstickvc.com"
+              },
+              "featureList": [
+                "Investor matching algorithm",
+                "3,000+ investor database",
+                "Verified email addresses",
+                "Industry-based matching",
+                "Funding stage filtering",
+                "Free service"
+              ],
+              "screenshot": "https://matchstickvc.com/screenshot.png",
+              "softwareVersion": "1.0.0"
+            })
+          }}
+        />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-7xl mx-auto">
             <div className="mb-8 flex justify-between items-center">
@@ -353,6 +390,42 @@ export default function Component() {
 
   return (
     <div className="min-h-screen bg-black">
+      <Script
+        id="structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Matchstick",
+            "description": "Connect startups with the right investors in under 1 minute. Access a diverse network of over 3,000 investors with verified email addresses.",
+            "url": "https://matchstickvc.com",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web Browser",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "description": "Free startup-investor matching service"
+            },
+            "provider": {
+              "@type": "Organization",
+              "name": "Matchstick",
+              "url": "https://matchstickvc.com"
+            },
+            "featureList": [
+              "Investor matching algorithm",
+              "3,000+ investor database",
+              "Verified email addresses",
+              "Industry-based matching",
+              "Funding stage filtering",
+              "Free service"
+            ],
+            "screenshot": "https://matchstickvc.com/screenshot.png",
+            "softwareVersion": "1.0.0"
+          })
+        }}
+      />
       <div className="container mx-auto px-4 py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
           {/* Left side - Product statement */}
