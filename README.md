@@ -5,9 +5,9 @@ Startup-investor matching platform with over 3,000 investors and verified email 
 ## Tech Stack
 
 ### Frontend
-- **Next.js 15** - React framework
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
+- **Next.js 15** 
+- **TypeScript** 
+- **Tailwind CSS** 
 
 ### Backend
 - **FastAPI** 
@@ -15,11 +15,7 @@ Startup-investor matching platform with over 3,000 investors and verified email 
 
 
 ### Infrastructure
-- **Render** - Backend hosting
-- **Vercel** - Frontend hosting
+- **Render** 
+- **Vercel** 
 
 
-### Data
-- CSV-based investor database
-- Industry and funding stage matching
-- Pagination (21 investors per page)
