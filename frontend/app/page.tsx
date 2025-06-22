@@ -9,10 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 
 interface StartupForm {
-  firstName: string
-  lastName: string
   email: string
   startupName: string
+  startupLink: string
   fundingStage: string
   industries: string[]
 }
@@ -33,6 +32,9 @@ interface MatchingResponse {
   sectors: string[]
   count: number
   matches: VC[]
+  page: number
+  per_page: number
+  total_pages: number
 }
 
 const getStages = (stageString?: string): string[] => {
@@ -50,10 +52,9 @@ const getStages = (stageString?: string): string[] => {
 
 export default function Component() {
   const [formData, setFormData] = useState<StartupForm>({
-    firstName: "",
-    lastName: "",
     email: "",
     startupName: "",
+    startupLink: "",
     fundingStage: "",
     industries: []
   })
@@ -62,6 +63,9 @@ export default function Component() {
   const [totalMatches, setTotalMatches] = useState(0)
   const [showResults, setShowResults] = useState(false)
   const [error, setError] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [perPage] = useState(21)
 
   const availableIndustries = [
     "AI/ML",
@@ -104,6 +108,39 @@ export default function Component() {
     })
   }
 
+  const handlePageChange = async (page: number) => {
+    setIsLoading(true)
+    setError("")
+
+    try {
+      const matchingResponse = await fetch("http://localhost:8000/api/matching/find", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sectors: formData.industries,
+          funding_stage: formData.fundingStage,
+          page: page,
+          per_page: perPage
+        })
+      })
+
+      if (!matchingResponse.ok) {
+        throw new Error("Failed to find matching investors")
+      }
+
+      const matchingData: MatchingResponse = await matchingResponse.json()
+      setMatches(matchingData.matches)
+      setCurrentPage(matchingData.page)
+      setTotalPages(matchingData.total_pages)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -118,10 +155,11 @@ export default function Component() {
         },
         body: JSON.stringify({
           company_name: formData.startupName,
-          founder_name: `${formData.firstName} ${formData.lastName}`,
+          founder_name: formData.email,
           founder_email: formData.email,
           sector: formData.industries.join(", "),
-          funding_stage: formData.fundingStage
+          funding_stage: formData.fundingStage,
+          website: formData.startupLink || null
         })
       })
 
@@ -137,7 +175,9 @@ export default function Component() {
         },
         body: JSON.stringify({
           sectors: formData.industries,
-          funding_stage: formData.fundingStage
+          funding_stage: formData.fundingStage,
+          page: 1,
+          per_page: perPage
         })
       })
 
@@ -148,6 +188,8 @@ export default function Component() {
       const matchingData: MatchingResponse = await matchingResponse.json()
       setMatches(matchingData.matches)
       setTotalMatches(matchingData.count)
+      setCurrentPage(matchingData.page)
+      setTotalPages(matchingData.total_pages)
       setShowResults(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -163,7 +205,11 @@ export default function Component() {
           <div className="max-w-7xl mx-auto">
             <div className="mb-8 flex justify-between items-center">
               <Button 
-                onClick={() => setShowResults(false)}
+                onClick={() => {
+                  setShowResults(false)
+                  setCurrentPage(1)
+                  setTotalPages(1)
+                }}
                 className="bg-black text-white border-white hover:bg-gray-800"
               >
                 ← Back to form
@@ -173,9 +219,15 @@ export default function Component() {
             <div className="text-center mb-12">
               <h1 className="text-4xl font-bold text-white mb-2">Your Investor Matches</h1>
               <p className="text-gray-400">
-                Showing {matches.length}/{totalMatches} investors matching your Startup.
+                Showing {matches.length} of {totalMatches} investors matching your startup (Page {currentPage} of {totalPages})
               </p>
             </div>
+
+            {isLoading && (
+              <div className="text-center py-8">
+                <p className="text-gray-400">Loading investors...</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {matches.map((vc) => {
@@ -223,6 +275,57 @@ export default function Component() {
                 )
               })}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-12 flex justify-center items-center space-x-4">
+                <Button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1 || isLoading}
+                  className="bg-black text-white border-white hover:bg-gray-800 disabled:opacity-50"
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center space-x-2">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        disabled={isLoading}
+                        className={`w-10 h-10 ${
+                          currentPage === pageNum
+                            ? "bg-white text-black"
+                            : "bg-black text-white border-white hover:bg-gray-800"
+                        }`}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages || isLoading}
+                  className="bg-black text-white border-white hover:bg-gray-800 disabled:opacity-50"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -278,33 +381,6 @@ export default function Component() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-white">
-                      First name
-                    </Label>
-                    <Input 
-                      id="firstName" 
-                      placeholder="John"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange("firstName", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-white">
-                      Last name
-                    </Label>
-                    <Input 
-                      id="lastName" 
-                      placeholder="Doe"
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange("lastName", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-white">
                     Email
@@ -329,6 +405,19 @@ export default function Component() {
                     value={formData.startupName}
                     onChange={(e) => handleInputChange("startupName", e.target.value)}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="startupLink" className="text-white">
+                    Startup website (optional)
+                  </Label>
+                  <Input 
+                    id="startupLink" 
+                    type="url"
+                    placeholder="https://yourstartup.com"
+                    value={formData.startupLink}
+                    onChange={(e) => handleInputChange("startupLink", e.target.value)}
                   />
                 </div>
 

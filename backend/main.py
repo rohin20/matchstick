@@ -31,10 +31,13 @@ class StartupSubmission(BaseModel):
     sector: str
     description: Optional[str] = None
     funding_stage: Optional[str] = None
+    website: Optional[str] = None
 
 class MatchingRequest(BaseModel):
     sectors: List[str]
     funding_stage: Optional[str] = None
+    page: Optional[int] = 1
+    per_page: Optional[int] = 21
 
 class VC(BaseModel):
     id: int
@@ -51,6 +54,9 @@ class MatchingResponse(BaseModel):
     sectors: List[str]  # Changed from sector to sectors
     count: int
     matches: List[VC]
+    page: int
+    per_page: int
+    total_pages: int
 
 # Database setup
 DATABASE_PATH = "backend/database/vc_matching.db"
@@ -86,6 +92,7 @@ def init_database():
             sector TEXT NOT NULL,
             description TEXT,
             funding_stage TEXT,
+            website TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -274,11 +281,29 @@ async def find_matching_vcs(request: MatchingRequest):
     # Sort by match score (highest first)
     matches.sort(key=lambda x: x.match_score, reverse=True)
     
+    # Calculate pagination
+    total_count = len(matches)
+    per_page = request.per_page or 21
+    page = request.page or 1
+    
+    # Calculate start and end indices
+    start_index = (page - 1) * per_page
+    end_index = start_index + per_page
+    
+    # Get paginated matches
+    paginated_matches = matches[start_index:end_index]
+    
+    # Calculate total pages
+    total_pages = (total_count + per_page - 1) // per_page
+    
     return MatchingResponse(
         success=True,
         sectors=mapped_sectors,
-        count=len(matches),
-        matches=matches[:20]
+        count=total_count,
+        matches=paginated_matches,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages
     )
 
 # Submit startup information
@@ -289,15 +314,16 @@ async def submit_startup(startup: StartupSubmission):
     
     try:
         cursor.execute('''
-            INSERT INTO startups (company_name, founder_name, founder_email, sector, description, funding_stage)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO startups (company_name, founder_name, founder_email, sector, description, funding_stage, website)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
             startup.company_name,
             startup.founder_name,
             startup.founder_email,
             startup.sector,
             startup.description,
-            startup.funding_stage
+            startup.funding_stage,
+            startup.website
         ))
         
         startup_id = cursor.lastrowid
@@ -337,7 +363,8 @@ async def get_startup(startup_id: int):
             "sector": row[4],
             "description": row[5],
             "funding_stage": row[6],
-            "created_at": row[7]
+            "website": row[7],
+            "created_at": row[8]
         }
     }
 
